@@ -1,0 +1,59 @@
+image:
+  oci: "ghcr.io/anomalyco/opencode:1.18.31"
+  # max size for writeable layer
+  upper_size: 1G
+
+cpus: 2
+memory: 2G
+
+mounts:
+  # host mounts
+  #
+  # agent workspace
+  - "./workspace:/workspace:quota=1G"
+  # go toolchain
+  - "/usr/local/go:/usr/local/go:ro"
+  # opencode config
+  - "./opencode.json:/etc/opencode-poc.json:ro"
+  # opencode plugin: openlit
+  - "/home/cf/go/bin/openlit:/usr/local/bin/openlit:ro"
+
+workdir: "/workspace"
+
+env:
+  # go toolchain
+  GOROOT: "/usr/local/go"
+  GOTOOLCHAIN: "local"
+  CGO_ENABLED: "0"
+  # opencode
+  OPENCODE_CONFIG: "/etc/opencode-poc.json"
+  # set PATH
+  PATH: "/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin"
+
+cmd:
+  #- "serve"
+  - "web"
+  - "--hostname"
+  - "0.0.0.0"
+  - "--port"
+  - "4096"
+
+# default is public unless 1+ allow is set
+network:
+  # policy: public
+  ports:
+    - "127.0.0.1:4096:4096"
+  allow:
+    #- api.github.com
+    #
+    # model api requests
+    - opencode.ai
+    # openlit egress sink
+    - host:tcp:4318
+
+# secrets requires all keys to be
+# provided to msb at launch
+secrets:
+  OPENCODE_API_KEY:
+    allow:
+      - "opencode.ai"
